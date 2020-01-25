@@ -1,6 +1,4 @@
-package teatro;
-
-import java.awt.Graphics2D;
+package teatro.core.backstage;
 
 public interface SurfaceObject {
 	
@@ -26,12 +24,9 @@ public interface SurfaceObject {
 	public abstract double getTopPeripheral();
 	public abstract double getRightPeripheral();
 	public abstract double getBottomPeripheral();
-	
-	
+
+
 	public SurfaceRepaintSpace getRepaintSpace();
-	
-	//public abstract int getLayerID();
-	public abstract boolean needsRepaintOnLayer(int layerID);
-	public abstract void repaintLayer(int layerID, Graphics2D brush, Surface HostSurface);
+
 	public int getLayerID();
 }

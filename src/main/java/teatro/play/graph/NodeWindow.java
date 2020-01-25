@@ -1,17 +1,9 @@
-package teatro;
+package teatro.play.graph;
 
-import java.awt.BorderLayout;
-import java.awt.Color;
-import java.awt.ComponentOrientation;
-import java.awt.FlowLayout;
-import java.awt.event.ComponentEvent;
-import java.awt.event.ComponentListener;
-import java.awt.event.KeyEvent;
-import java.awt.event.KeyListener;
-import java.awt.event.MouseEvent;
-import java.awt.event.MouseListener;
-import java.awt.event.MouseWheelEvent;
-import java.awt.event.MouseWheelListener;
+import teatro.core.backstage.GridSpaceMap;
+import teatro.templates.NavigableSurface;
+
+import java.awt.*;
 
 import javax.swing.JButton;
 import javax.swing.JFrame;
@@ -19,32 +11,27 @@ import javax.swing.JMenu;
 import javax.swing.JMenuBar;
 import javax.swing.JMenuItem;
 import javax.swing.JPanel;
-import javax.swing.JTextField;
-
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 import java.util.List;
 
-public class GraphBoard
+public class NodeWindow
 {
     private static JFrame _window;
 
     public static final int WIDTH = 800;
     public static final int HEIGHT = 700;
 
-    GraphSurfaceBuilder GraphBuilder;
+    NavigableSurface Surface;
 
     private JButton startButton;
     private JButton randomizeNetworkButton;
 
-    public GraphBoard(List<Object> tree) {
-        //fullscreen
-		/*
-			frame.setExtendedState(JFrame.MAXIMIZED_BOTH);
-			frame.setUndecorated(true);
-			frame.setVisible(true);
-		*/
-        GraphBuilder = new GraphSurfaceBuilder(tree);
+    public NodeWindow(List<Object> tree) {
+        
+        Surface = new NavigableSurface();
+        SurfaceNode nnode = new SurfaceNode(tree, -400, 2500, this);
+        addSurfaceObject(nnode);
+        Surface.setPreferredSize(new Dimension(500, 500));
+        Surface.setBackground(Color.black);
 
         System.setProperty("sun.java2d.opengl", "true");
         _window = new JFrame("Network Display");
@@ -79,7 +66,7 @@ public class GraphBoard
         MainPanel.setLayout(new BorderLayout());
         //MainPanel.addInto(new JLabel("AbstractSurfaceNode display:",JLabel.CENTER), BorderLayout.NORTH);
         MainPanel.setBackground(Color.CYAN);
-        MainPanel.add(GraphBuilder.getSurface(), BorderLayout.CENTER);
+        MainPanel.add(Surface, BorderLayout.CENTER);
 
         JPanel controlBarPanel = new JPanel();
         controlBarPanel.setLayout(new FlowLayout());
@@ -96,13 +83,13 @@ public class GraphBoard
 
         _window.getContentPane().add(MainPanel);
         _window.setVisible(true);
-
     }
 
-    public GraphSurfaceBuilder getBuilder(){
-        return GraphBuilder;
+    public void addSurfaceObject(SurfaceNode PanelNeuron) {
+        if (Surface.getMap() == null) {
+            Surface.setMap(new GridSpaceMap(PanelNeuron.getX(), PanelNeuron.getY(), 10000));
+        }
+        Surface.setMap(Surface.getMap().addAndUpdate(PanelNeuron));
     }
-
-
 
 }

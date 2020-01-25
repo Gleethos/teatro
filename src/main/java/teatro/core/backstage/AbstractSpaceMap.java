@@ -1,8 +1,7 @@
-package teatro;
+package teatro.core.backstage;
 
 import java.awt.Graphics2D;
 import java.util.HashMap;
-import java.util.LinkedList;
 import java.util.List;
 
 public abstract class AbstractSpaceMap {

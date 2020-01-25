@@ -1,5 +1,10 @@
 
-package teatro;
+package teatro.play.graph;
+
+import teatro.core.backstage.DrawUtils;
+import teatro.core.backstage.Surface;
+import teatro.core.backstage.SurfaceObject;
+import teatro.core.backstage.SurfaceRepaintSpace;
 
 import java.awt.Color;
 import java.awt.Font;
@@ -8,11 +13,10 @@ import java.awt.MultipleGradientPaint.CycleMethod;
 import java.awt.Paint;
 import java.awt.RadialGradientPaint;
 import java.awt.geom.Point2D;
-import java.util.ArrayList;
 import java.util.Random;
 
 
-public class SurfaceNodeInput implements SurfaceObject{
+public class SurfaceNodeInput implements SurfaceObject {
 
     private boolean _isActive = false;
     private boolean _changeOccurred = false;
@@ -146,23 +150,11 @@ public class SurfaceNodeInput implements SurfaceObject{
         double newVecX = x - centerX;
         double newVecY = y - centerY;
         double alpha = -1 * (Math.atan2(vecX, vecY) - Math.atan2(newVecY, newVecX));
-
-        //ArrayList<SurfaceRepaintSpace> queue = new ArrayList<SurfaceRepaintSpace>();
-        //queue.add(
-        //    Surface.layers()[7].add(getRepaintSpace(Surface));
-        //);
         vecX = Math.cos(alpha) * vecX - Math.sin(alpha) * vecY;
         vecY = Math.cos(alpha) * vecY + Math.sin(alpha) * vecX;
         _X = centerX + vecX;
         _Y = centerY + vecY;
-        //if (queue.get(0).X == _X && queue.get(0).Y == _Y) {
-        //    queue.remove(0);
-        //    return queue;
-        //}
         _changeOccurred = true;
-        //queue.add(this.getRepaintSpace());
-        //Surface.layers()[7].add(getRepaintSpace(Surface));
-        //return queue;
     }
 
     //
@@ -178,23 +170,16 @@ public class SurfaceNodeInput implements SurfaceObject{
         vecY = Math.cos(alpha) * vecY + Math.sin(alpha) * vecX;
         _X = centerX + vecX;
         _Y = centerY + vecY;
-        //if (queue.get(0).X == _X && queue.get(0).Y == _Y) {
-        //    queue.remove(0);
-        //    return queue;
-        //}
         _changeOccurred = true;
-        //queue.add(
-        //        Surface.layers()[7].add(
-        //        this.getRepaintSpace(Surface)
-        //    );
         return;// queue;
     }
 
     public void updateOn(double centerX, double centerY, double hostRadius, Surface surface) {
         _X += _velX;
         _Y += _velY;
-        _velX *= 0.8;
-        _velY *= 0.8;
+        double velmod = 1/surface.getFrameDelta();
+        _velX *= velmod;
+        _velY *= velmod;
 
         hostRadius *= this.getInputNodeOrbitModFrom(hostRadius);
         double vecX = _X - centerX;
@@ -230,17 +215,10 @@ public class SurfaceNodeInput implements SurfaceObject{
         double startY = data[1];
         double targX = data[2];
         double targY = data[3];
-        //ArrayList<SurfaceRepaintSpace> queue = new ArrayList<SurfaceRepaintSpace>();
-        //queue.add(getRepaintSpace(Surface));
-        //Surface.layers()[7].add(getRepaintSpace(Surface));
-        //queue.getFrom(0).dY+=100;
         double vecX = targX - startX;
         double vecY = targY - startY;
         _X += vecX;
         _Y += vecY;
-        //queue.add(getRepaintSpace(Surface));
-        //Surface.layers()[7].add(getRepaintSpace(Surface));
-        //return queue;
     }
 
     @Override
@@ -311,18 +289,6 @@ public class SurfaceNodeInput implements SurfaceObject{
     @Override
     public double getBottomPeripheral() {
         return _Y-_radius;
-    }
-
-
-
-    @Override
-    public boolean needsRepaintOnLayer(int layerID) {
-        return false;
-    }
-
-    @Override
-    public void repaintLayer(int layerID, Graphics2D brush, Surface HostSurface) {
-
     }
 
     @Override

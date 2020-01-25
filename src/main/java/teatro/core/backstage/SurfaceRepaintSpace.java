@@ -1,5 +1,5 @@
 
-package teatro;
+package teatro.core.backstage;
 
 public class SurfaceRepaintSpace {
 

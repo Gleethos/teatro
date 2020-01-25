@@ -1,4 +1,4 @@
-package teatro;
+package teatro.core.backstage;
 
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
@@ -20,14 +20,14 @@ public class SurfaceListener implements MouseListener, MouseMotionListener, Mous
     private static final int pressTimeLimit = 900500000;
     private static final double pressRadius = 100;
 
-    teatro.Surface Surface;
+    teatro.core.backstage.Surface Surface;
 
-    SurfaceListener(teatro.Surface surface) {
+    public SurfaceListener(teatro.core.backstage.Surface surface) {
         Surface = surface;
     }
 
     //--------------------------------------------------------------------------------------------------------------------------------
-    public void updateOn(GraphSurface gui) {
+    public void updateOn(Surface gui) {
         if (PressPoint != null) {
             if (PressPoint[0] > pressTimeLimit) {
                 Surface.longPressedAt(PressPoint[1], PressPoint[2]);

@@ -1,4 +1,4 @@
-package teatro;
+package teatro.core.backstage;
 
 import java.awt.Color;
 import java.awt.Font;

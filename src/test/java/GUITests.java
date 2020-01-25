@@ -1,9 +1,25 @@
-import teatro.*;
 import org.junit.Test;
+import teatro.core.backstage.*;
+import teatro.play.Gridded;
 
-import java.awt.*;
+public class GUITests
+{
 
-public class GUITests {
+    @Test
+    public void experiments(){
+
+
+        Gridded g = new Gridded();
+        try{
+            Thread.sleep(20000);
+        } catch(Exception e){
+
+        }
+
+
+
+    }
+
 
     @Test
     public void testSurfaceUtility(){
@@ -217,15 +233,6 @@ public class GUITests {
                 return null;
             }
 
-            @Override
-            public boolean needsRepaintOnLayer(int layerID) {
-                return false;
-            }
-
-            @Override
-            public void repaintLayer(int layerID, Graphics2D brush, Surface HostSurface) {
-
-            }
 
             @Override
             public int getLayerID() {

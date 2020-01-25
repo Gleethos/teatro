@@ -1,8 +1,9 @@
-package teatro;
+package teatro.templates;
 
+
+import teatro.core.backstage.*;
 
 import java.awt.Color;
-import java.awt.Font;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
 import java.awt.RenderingHints;
@@ -18,9 +19,10 @@ import javax.swing.JPanel;
 import javax.swing.Timer;
 
 
-public class GraphSurface extends JPanel implements Surface, ActionListener {
+public class NavigableSurface extends JPanel implements Surface, ActionListener
+{
     // I/O:
-    private SurfaceListener Listener;
+    private SurfaceListener _listener;
     // Navigation:
     private AffineTransform Scaler = new AffineTransform();
     private AffineTransform Translator = new AffineTransform();
@@ -29,14 +31,13 @@ public class GraphSurface extends JPanel implements Surface, ActionListener {
     AbstractSpaceMap PanelMap = null;
 
     // Animations:
-    private Animator Animator;
+    private teatro.core.backstage.Animator _animator;
 
-    private int scaleAnimationCounter = 60;
+    private int scaleAnimationCounter = 160;
     private int lastSenseX;
     private int lastSenseY;
 
     private Timer GUITimer;
-
 
     // Sense Focus:
     private SurfaceObject FocusObject;
@@ -129,11 +130,8 @@ public class GraphSurface extends JPanel implements Surface, ActionListener {
     private boolean touchMode = true;
 
     private boolean drawRepaintSpaces = true;
-    private boolean advancedRendering = false;
+    private boolean advancedRendering = true;
     private boolean mapRendering = false;
-
-    private int Shade = 0;
-    private boolean shadedClipping = true;
 
     private long frameStart;
     private int frameDelta;
@@ -142,7 +140,7 @@ public class GraphSurface extends JPanel implements Surface, ActionListener {
     private double smoothFPS;
 
     public interface SurfaceAction {
-        void actOn(GraphSurface panel);
+        void actOn(NavigableSurface panel);
     }
 
     public AffineTransform getScaler() {
@@ -170,15 +168,7 @@ public class GraphSurface extends JPanel implements Surface, ActionListener {
     }
 
     public SurfaceListener getListener() {
-        return Listener;
-    }
-
-    public double getFPS() {
-        return fps;
-    }
-
-    public double getSmoothedFPS() {
-        return smoothFPS;
+        return _listener;
     }
 
     // Settings:
@@ -194,22 +184,9 @@ public class GraphSurface extends JPanel implements Surface, ActionListener {
         return drawRepaintSpaces;
     }
 
-    public boolean isClipShadeRendering() {
-        return shadedClipping;
-    }
-
     public boolean isInTouchMode() {
         return touchMode;
     }
-
-    public int getShade() {
-        return Shade;
-    }
-
-    public void setShade(int value) {
-        Shade = value;
-    }
-
 
     private SurfaceRepaintSpace _currentFrameSpace;
 
@@ -238,7 +215,6 @@ public class GraphSurface extends JPanel implements Surface, ActionListener {
     public List<ObjectPainter>[] layers() {
         return _layers;
     }
-
 
     //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
     public void setPressAction(SurfaceAction action) {
@@ -298,34 +274,69 @@ public class GraphSurface extends JPanel implements Surface, ActionListener {
 
     //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
     public interface SurfacePainter {
-        void actOn(GraphSurface panel, Graphics2D brush);
+        void actOn(NavigableSurface panel, Graphics2D brush);
     }
 
+    //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
     public void setPaintAction(SurfacePainter action) {
-        Painter = action;
+        _painter = action;
     }
 
-    SurfacePainter Painter;
+    SurfacePainter _painter;
+
     //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-
     //=======================================================================================
-    public GraphSurface() {
-        Painter = GraphSurface.Utility.DefaultPainter;
-        Animator = new Animator();
-        Listener = new SurfaceListener(this);
-        this.addMouseListener(Listener);
-        this.addMouseWheelListener(Listener);
-        this.addMouseMotionListener(Listener);
+
+    public NavigableSurface() {
+        _painter = NavigableSurface.Utility.DefaultPainter;
+        _animator = new Animator();
+        _listener = new SurfaceListener(this);
+        this.addMouseListener(_listener);
+        this.addMouseWheelListener(_listener);
+        this.addMouseMotionListener(_listener);
         setBackground(Color.black);
         repaint(0, 0, getWidth(), getHeight());
-        GUITimer = new Timer(0, this);
+        this.scaleAt(getWidth() / 2, getHeight() / 2, 0.001);
+        GUITimer = new Timer(25, this);
         GUITimer.start();
     }
 
-    public void updateAndRedraw() {
-        update();
-        startRepaintQueue();
+    public void updateAndRedraw()
+    {
+        _listener.updateOn(this);
+        applySwipe.actOn(this);
+        applyClick.actOn(this);
+        applyLongPress.actOn(this);
+        applyDoubleClick.actOn(this);
+        applyScaling.actOn(this);
+        applySense.actOn(this);
+        applyDrag.actOn(this);
+
+        double tlx = realX(0);
+        double tly = realY(0);
+        double brx = tlx+((getWidth()) / (getScale()*1)) ;
+        double bry = tly+((getHeight())/ (getScale()*1));
+        _currentFrameSpace = new SurfaceRepaintSpace(tlx, tly, brx, bry);
+
+        if (PanelMap != null) {
+            LinkedList<SurfaceObject> killList = new LinkedList<SurfaceObject>();
+            LinkedList<SurfaceObject> updateList = new LinkedList<SurfaceObject>();
+            PanelMap.applyToAll(
+                    (SurfaceObject thing) -> {
+                        updateList.add(thing);
+                        if ((thing).killable()) killList.add((thing));
+                        return true;
+                    }
+            );
+            if (killList.size() > 0) System.out.println("KILLING OCCURRED! :O");
+            Surface surface = this;
+            updateList.forEach((SurfaceObject thing) -> thing.updateOn(surface));
+            for(int ki = 0; ki<killList.size(); ki++) PanelMap = PanelMap.removeAndUpdate(killList.get(ki));
+        }
+
+        // REPAINT:
+        repaint(0, 0, getWidth(), getHeight());
 
         frameDelta = (int) (Math.abs((System.nanoTime() - frameStart)));
         fps = 1e9 / (((double) frameDelta));
@@ -344,12 +355,12 @@ public class GraphSurface extends JPanel implements Surface, ActionListener {
         smoothFPS = (fps + 12 * smoothFPS) / 13;
         frameStart = System.nanoTime();
 
-        if (scaleAnimationCounter > 0) {
-            double scale = 1 / Math.pow(1 + (1 / ((double) scaleAnimationCounter + 15)), 2);
-            this.scaleAt(getWidth() / 2, getHeight() / 2, scale);
-            scaleAnimationCounter -= 1;
-            repaint(0, 0, getWidth(), getHeight());
-        }
+        //if (scaleAnimationCounter > 0) {
+        //    double scale = 1 / Math.pow(1 + (2 / ((double) scaleAnimationCounter + 15)), 2);
+        //    this.scaleAt(getWidth() / 2, getHeight() / 2, scale);
+        //    scaleAnimationCounter -= 1;
+        //    repaint(0, 0, getWidth(), getHeight());
+        //}
 
     }
 
@@ -379,80 +390,6 @@ public class GraphSurface extends JPanel implements Surface, ActionListener {
     }
 
     //--------------------------------------------------------------------------------------------------------------------------------
-    public int getCurrentFrameDelta() {
-        return frameDelta;
-    }
-
-    //--------------------------------------------------------------------------------------------------------------------------------
-    private void update() {
-        Listener.updateOn(this);
-        applySwipe.actOn(this);
-        applyClick.actOn(this);
-        applyLongPress.actOn(this);
-        applyDoubleClick.actOn(this);
-        applyScaling.actOn(this);
-        applySense.actOn(this);
-        applyDrag.actOn(this);
-
-        double tlx = realX(0);
-        double tly = realY(0);
-        double brx = tlx+((getWidth()) / (getScale()*1)) ;
-        double bry = tly+((getHeight())/ (getScale()*1));
-        _currentFrameSpace = new SurfaceRepaintSpace(tlx, tly, brx, bry);
-
-        if (PanelMap != null) {
-
-            LinkedList<SurfaceObject> killList = new LinkedList<SurfaceObject>();
-            LinkedList<SurfaceObject> updateList = new LinkedList<SurfaceObject>();
-            PanelMap.applyToAll(
-                    (SurfaceObject thing) -> {
-                        updateList.add(thing);
-                        if ((thing).killable()) killList.add((thing));
-                        return true;
-                    }
-            );
-            if (killList.size() > 0) {
-                System.out.println("KILLING OCCURRED! :O");
-            }
-            updateList.forEach((SurfaceObject thing) -> thing.updateOn(this));
-            for(int ki = 0; ki<killList.size(); ki++) PanelMap = PanelMap.removeAndUpdate(killList.get(ki));
-
-        }
-    }
-
-    //--------------------------------------------------------------------------------------------------------------------------------
-    public void startRepaintQueue() {
-        //_layers[0].add(
-        //        (brush) -> {
-        //            if (this.isClipShadeRendering()) {
-        //                double newS = this.getShade() % (200 * Math.PI);
-        //                int color = (int) Math.abs(((Math.pow(Math.sin((Math.PI / 200) * newS), 3))) * 200);
-        //                color = (int) Math.abs(color);
-        //                if (color < 0) color *= -1;
-        //                brush.setColor(new Color(color, color, color));
-        //                brush.fillRect(
-        //                        (int) (_currentFrameSpace.getLeftPeripheral()),
-        //                        (int) (_currentFrameSpace.getTopPeripheral()),
-        //                        (int) _currentFrameSpace.getWidth(),//.getDistanceX() * 2,
-        //                        (int) _currentFrameSpace.getHeight()//.getDistanceY() * 2
-        //                );
-        //                newS++;
-        //                newS %= 200;
-        //                this.setShade((int) newS);
-        //            }
-        //            Font old = brush.getFont();
-        //            brush.setFont(new Font("Tahoma", Font.BOLD, 22));
-        //            brush.setColor(Color.GREEN);
-        //            brush.drawString((int) this.getFPS() + "; " + this.getSmoothedFPS(), 0, brush.getFont().getSize());
-        //            brush.setFont(old);
-        //        }
-        //);
-        repaint(0, 0, getWidth(), getHeight());
-
-
-    }
-
-    //--------------------------------------------------------------------------------------------------------------------------------
     public void paintComponent(Graphics g)
     {
         super.paintComponent(g);
@@ -461,13 +398,11 @@ public class GraphSurface extends JPanel implements Surface, ActionListener {
             brush.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
         else brush.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_OFF);
 
-        // Painting top layers now :
-
         // Surface shift:
         if ((this.getCenterY() != ((double) this.getHeight()) / 2) || (this.getCenterX() != ((double) this.getWidth()) / 2)) {
             double newCenterX = ((double) this.getWidth()) / 2;
             double newCenterY = ((double) this.getHeight()) / 2;
-            this.translatePanel((newCenterX - this.getCenterX()), (newCenterY - this.getCenterY()));
+            this.translate((newCenterX - this.getCenterX()), (newCenterY - this.getCenterY()));
             this.setCenterX(newCenterX);
             this.setCenterY(newCenterY);
         }
@@ -478,20 +413,9 @@ public class GraphSurface extends JPanel implements Surface, ActionListener {
         //Map visualization
         if (this.isMaprendering() && getMap() != null) getMap().paintStructure(brush);
 
-        //========================
-        Painter.actOn(this, brush);
-        //========================
-        //    /* Connections - 0
-        //     * Root Bodies - 1
-        //     * Root Connections - 2
-        //     * Basic Root Nodes - 3
-        //     * Value Root Nodes - 4
-        //     * Memory Root Nodes - 5
-        //     * Super Root Nodes - 6
-        //     * Default Nodes - 7
-        //     * Menus
-        //     * */
-        //}
+        //================================
+        _painter.actOn(this, brush);
+        //================================
 
         //RENDERING VISUALIZATION:
         if (this.isClipRendering()) {
@@ -545,8 +469,7 @@ public class GraphSurface extends JPanel implements Surface, ActionListener {
                             best = current;
                         }
                     }
-                }//-----------------------
-                else {//-----------------------
+                }  else {
                     if (upToException != null) {
                         if (current.getLayerID() < best.getLayerID() && upToException.getLayerID() < current.getLayerID()) {
                             best = current;
@@ -556,7 +479,7 @@ public class GraphSurface extends JPanel implements Surface, ActionListener {
                             best = current;
                         }
                     }
-                }//-----------------------
+                }
             }
         }
         if (upToException != null && best != null) {
@@ -569,7 +492,6 @@ public class GraphSurface extends JPanel implements Surface, ActionListener {
 
     //============================================================
 
-
     //--------------------------------------------------------------------------------------------------------------------------------
     public SurfaceObject findObject(double x, double y, boolean topMost, SurfaceObject upToException) {
         return find(x, y, topMost, upToException,
@@ -577,7 +499,7 @@ public class GraphSurface extends JPanel implements Surface, ActionListener {
                     if (element instanceof SurfaceObject) {
                         if ((element).hasGripAt(x, y, this)) {
                             return true;
-                        }//System.out.println("yeahh");
+                        }
                     }
                     return false;
                 });
@@ -605,7 +527,7 @@ public class GraphSurface extends JPanel implements Surface, ActionListener {
         Swipe = Vector;
     }
 
-    public void translatePanel(double translateX, double translateY) {
+    public void translate(double translateX, double translateY) {
         Translator.translate(translateX * 1 / Scaler.getScaleX(), translateY * 1 / Scaler.getScaleY());
         repaint(0, 0, getWidth(), getHeight());//Repaint spaces?
     }
@@ -681,7 +603,7 @@ public class GraphSurface extends JPanel implements Surface, ActionListener {
 
     @Override
     public Animator getAnimator() {
-        return Animator;
+        return _animator;
     }
 
     @Override
@@ -699,8 +621,9 @@ public class GraphSurface extends JPanel implements Surface, ActionListener {
         PanelMap = newMap;
     }
 
-
-    public static class Utility {
+    public static class Utility
+    {
+        //-------------------------------------
         static SurfacePainter DefaultPainter =
                 (surface, brush) ->
                 {
@@ -717,12 +640,9 @@ public class GraphSurface extends JPanel implements Surface, ActionListener {
                 (surface) ->
                 {
                     int[] Press = surface.getPress();
-                    if (Press == null) {
-                        return;
-                    }
+                    if (Press == null) return;
                     int x = Press[0];
                     int y = Press[1];
-
                     surface.setPress(null);
                 };
         //-------------------------------------
@@ -730,12 +650,9 @@ public class GraphSurface extends JPanel implements Surface, ActionListener {
                 (surface) ->
                 {
                     int[] LongPress = surface.getLongPress();
-                    if (LongPress == null) {
-                        return;
-                    }
+                    if (LongPress == null) return;
                     int x = LongPress[0];
                     int y = LongPress[1];
-
                     surface.setLongPress(null);
                 };
         //-------------------------------------
@@ -743,12 +660,9 @@ public class GraphSurface extends JPanel implements Surface, ActionListener {
                 (surface) ->
                 {
                     int[] Click = surface.getClick();
-                    if (Click == null) {
-                        return;
-                    }
+                    if (Click == null) return;
                     int x = Click[0];
                     int y = Click[1];
-
                     surface.getListener().setDragStart(x, y);
                     SurfaceObject found = surface.findObject(surface.realX(x), surface.realY(y), true, null);
                     if (found != null) {
@@ -763,13 +677,9 @@ public class GraphSurface extends JPanel implements Surface, ActionListener {
         static SurfaceAction DefaultDoubleClickAction = (surface) ->
         {
             int[] DoubleClick = surface.getDoubleClick();
-            if (DoubleClick == null) {
-                return;
-            }
-
+            if (DoubleClick == null) return;
             int x = DoubleClick[0];
             int y = DoubleClick[1];
-
             SurfaceObject found = surface.findObject(surface.realX(x), surface.realY(y), true, null);
             if (found != null) {
                 found.doubleClickedAt(surface.realX(x), surface.realY(y), surface);
@@ -778,7 +688,7 @@ public class GraphSurface extends JPanel implements Surface, ActionListener {
             }
             surface.setDoubleClick(null);
         };
-
+        //-------------------------------------
         static SurfaceAction DefaultScalingAction =
                 (surface) ->
                 {
@@ -788,13 +698,13 @@ public class GraphSurface extends JPanel implements Surface, ActionListener {
                     double scaleFactor = surface.getScaling()[2];
                     surface.setLastSenseX(x);
                     surface.setLastSenseY(y);
-                    surface.translatePanel(-x, -y);
+                    surface.translate(-x, -y);
                     surface.getScaler().scale((scaleFactor), (scaleFactor));
-                    surface.translatePanel(x, y);
+                    surface.translate(x, y);
                     surface.setScaling(null);
                     surface.repaint(0, 0, surface.getWidth(), surface.getHeight());
                 };
-
+        //-------------------------------------
         static SurfaceAction DefaultSenseAction =
                 (surface) ->
                 {
@@ -805,14 +715,12 @@ public class GraphSurface extends JPanel implements Surface, ActionListener {
                     surface.setMovement(null);
                     double realX = surface.realX(x);
                     double realY = surface.realY(y);
-                    //This needs improvement! -> find neuron function needs to be optimized!
                     if (surface.getFocusObject() != null) surface.getFocusObject().movementAt(realX, realY, surface);
-                    //Overlapping nodes need to be considered!
                     surface.setFocusObject(surface.findObject(realX, realY, true, null));
                     surface.setLastSenseX(x);
                     surface.setLastSenseY(y);
                 };
-
+        //-------------------------------------
         static SurfaceAction DefaultSwipeAction =
                 (surface) ->
                 {
@@ -821,34 +729,29 @@ public class GraphSurface extends JPanel implements Surface, ActionListener {
                     if (surface.isInTouchMode()) {
                         surface.setFocusObject(surface.findObject(surface.realX(Swipe[0]), surface.realY(Swipe[1]), true, null));
                         if (surface.getFocusObject() != null) {
-                            //ArrayList<SurfaceRepaintSpace> RepaintQueue = surface.getRepaintQueue();
-                            //if (RepaintQueue == null) RepaintQueue = new ArrayList<SurfaceRepaintSpace>();
                             surface.setLastSenseX(Swipe[2]);
                             surface.setLastSenseY(Swipe[3]);
                             double[] data = {surface.realX(Swipe[0]), surface.realY(Swipe[1]), surface.realX(Swipe[2]), surface.realY(Swipe[3])};
-                            //RepaintQueue.addAll(
                             surface.getFocusObject().moveDirectional(data, surface);
-                            //);
-                            //surface.setRepaintQueue(RepaintQueue);
                             Swipe[0] = Swipe[2];
                             Swipe[1] = Swipe[3];
-                            Swipe = null;
                             return;
                         }
                         if (surface.getFocusObject() == null) {
-                            surface.translatePanel(Swipe[2] - Swipe[0], Swipe[3] - Swipe[1]);
+                            surface.translate(Swipe[2] - Swipe[0], Swipe[3] - Swipe[1]);
                             Swipe[0] = Swipe[2];
                             Swipe[1] = Swipe[3];
                             surface.setSwipe(null);
                         }
                     } else {
-                        if (Swipe.length == 4) surface.translatePanel(Swipe[2] - Swipe[0], Swipe[3] - Swipe[1]);
+                        if (Swipe.length == 4) surface.translate(Swipe[2] - Swipe[0], Swipe[3] - Swipe[1]);
                         Swipe[0] = Swipe[2];
                         Swipe[1] = Swipe[3];
                         surface.setSwipe(null);
                     }
                     surface.setSwipe(null);
                 };
+        //-------------------------------------
         static SurfaceAction DefaultDragAction =
                 (surface) ->
                 {
@@ -861,7 +764,10 @@ public class GraphSurface extends JPanel implements Surface, ActionListener {
                     }
                     surface.setSwipe(null);
                 };
+        //-------------------------------------
+
     }
+
 
     @Override
     public void actionPerformed(ActionEvent arg0) {
