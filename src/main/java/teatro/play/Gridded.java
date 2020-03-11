@@ -1,5 +1,6 @@
 package teatro.play;
 
+import teatro.StyleSet;
 import teatro.templates.NavigableSurface;
 
 import javax.swing.*;
@@ -9,57 +10,24 @@ import java.util.Map;
 
 public class Gridded
 {
-    private static JFrame _window;
+    private static final int _WIDTH = 800;
+    private static final int _HEIGHT = 700;
 
-    public static final int WIDTH = 800;
-    public static final int HEIGHT = 700;
+    private double _bulk;
+    private static final double _START_BULK = 100_000;
+
+
+    private StyleSet _style = StyleSet.getInstances().get("laboratory");
+
+    private JFrame _window;
 
     private NavigableSurface _surface;
 
-    private double _bulk;
-    private static final double START_BULK = 100_000;
-
     private Map<Class, NavigableSurface.SurfacePainter> _graphPainter;
+
 
     public Gridded()
     {
-        _surface = new NavigableSurface();
-        _bulk = START_BULK;
-        _surface.setPaintAction(this::_drawGrid);
-        _surface.setPreferredSize(new Dimension(500, 500));
-        _surface.setBackground(Color.black);
-
-        System.setProperty("sun.java2d.opengl", "true");
-        _window = new JFrame("Network Display");
-        _window.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-        _window.setSize(WIDTH, HEIGHT);
-        _window.setLocationRelativeTo(null);
-        _window.setResizable(true);
-        //_window.setLayout(null);
-        //_window.addKeyListener(this);
-        _window.setFocusable(true);
-        _window.setUndecorated(false);
-        _window.setVisible(true);
-
-        JMenuBar MenuBar = new JMenuBar();
-        MenuBar.setBackground(Color.black);
-        _window.setJMenuBar(MenuBar);
-        JMenu ProjectMenu = new JMenu("Project");
-        ProjectMenu.setOpaque(true);
-        //ProjectMenu.setBackground(Color.cyan);
-        MenuBar.add(ProjectMenu);
-        JMenuItem OpenOption = new JMenuItem("Open...");
-        ProjectMenu.add(OpenOption);
-
-        JPanel MainPanel = new JPanel();
-        MainPanel.setLayout(new BorderLayout());
-        //MainPanel.addInto(new JLabel("AbstractSurfaceNode display:",JLabel.CENTER), BorderLayout.NORTH);
-        MainPanel.setBackground(Color.CYAN);
-        MainPanel.add(_surface, BorderLayout.CENTER);
-
-        _window.getContentPane().add(MainPanel);
-        _window.setVisible(true);
-
         _graphPainter = new HashMap<>();
 
         _graphPainter.put(double[][].class, (surface, brush)->{
@@ -71,7 +39,7 @@ public class Gridded
                 brush.setStroke(new BasicStroke((int)(3/surface.getScale())));
                 for(int i=0; i<data.length; i++){
                     double[] p = data[i];
-                    if(i>0) brush.drawLine((int)(x*START_BULK), (int)(-y*START_BULK), (int)(p[0]*START_BULK), (int)(-p[1]*START_BULK));
+                    if(i>0) brush.drawLine((int)(x* _START_BULK), (int)(-y* _START_BULK), (int)(p[0]* _START_BULK), (int)(-p[1]* _START_BULK));
                     x = p[0];
                     y = p[1];
                 }
@@ -85,17 +53,49 @@ public class Gridded
             brush.setStroke(new BasicStroke((int)(3/surface.getScale())));
             for(int i=0; i<data.length; i++)
             {
-                if(i>0) brush.drawLine((int)(x*START_BULK), (int)(-y*START_BULK), (int)(i*START_BULK), (int)(-data[i]*START_BULK));
+                if(i>0) brush.drawLine((int)(x* _START_BULK), (int)(-y* _START_BULK), (int)(i* _START_BULK), (int)(-data[i]* _START_BULK));
                 x = i;
                 y = data[i];
             }
         });
+        _surface = new NavigableSurface();
+        _bulk = _START_BULK;
+        _surface.setPaintAction(this::_drawGrid);
+        _surface.setPreferredSize(new Dimension(500, 500));
+        _surface.setBackground(_style.getBackground());
 
+        System.setProperty("sun.java2d.opengl", "true");
+        _window = new JFrame("Network Display");
+        _window.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        _window.setSize(_WIDTH, _HEIGHT);
+        _window.setLocationRelativeTo(null);
+        _window.setResizable(true);
+        //_window.setLayout(null);
+        //_window.addKeyListener(this);
+        _window.setFocusable(true);
+        _window.setUndecorated(false);
+        _window.setVisible(true);
+
+        JMenuBar MenuBar = new JMenuBar();
+        MenuBar.setBackground(_style.getBackground());
+        _window.setJMenuBar(MenuBar);
+        JMenu ProjectMenu = new JMenu("Project");
+        ProjectMenu.setOpaque(true);
+        //ProjectMenu.setBackground(Color.cyan);
+        MenuBar.add(ProjectMenu);
+        JMenuItem OpenOption = new JMenuItem("Open...");
+        ProjectMenu.add(OpenOption);
+
+        JPanel MainPanel = new JPanel();
+        MainPanel.setLayout(new BorderLayout());
+        //MainPanel.addInto(new JLabel("AbstractSurfaceNode display:",JLabel.CENTER), BorderLayout.NORTH);
+        MainPanel.setBackground(_style.getElementground());
+        MainPanel.add(_surface, BorderLayout.CENTER);
+
+        _window.getContentPane().add(MainPanel);
+        _window.setVisible(true);
 
     }
-
-
-
 
 
     private void _drawGrid(NavigableSurface surface, Graphics2D brush)
@@ -113,12 +113,13 @@ public class Gridded
         else if(steps<10) _bulk /=2;
         int scale = (int) _bulk;
 
-        brush.setColor(Color.green); // Central cross:
+        brush.setColor(_style.getHighlight()); // Central cross:
         if(tlx<0 && 0<brx) brush.fillRect(0, (int)(tly-thickness/2), (int)thickness, (int)(bry-tly));
         if(tly<0 && 0<bry) brush.fillRect((int)(tlx-thickness/2), 0, (int)(brx-tlx), (int)thickness);
-        brush.setColor(Color.cyan);
-        thickness/=2;
-        // y = n * x
+
+
+        brush.setColor(_style.getElementground());
+        thickness/=2; // y = n * x
 
         if(scale>0){
             int n = (int)tlx/scale;
@@ -135,7 +136,7 @@ public class Gridded
                     );
                     brush.fill(r);
                     //Label box:
-                    String label = ""+(n*scale/START_BULK);
+                    String label = ""+(n*scale/ _START_BULK);
                     int leftShift = (int)(n*scale-label.length()*fontsize/4);
 
                     int horzStick = (int) (
@@ -155,9 +156,9 @@ public class Gridded
                     );
                     Font font = new Font("Serif", Font.PLAIN, (int)(fontsize));
                     brush.setFont(font);
-                    brush.setColor(Color.black);
+                    brush.setColor(_style.getElementfont());
                     brush.drawString(label, leftShift, (int)(horzStick+fontsize/2.7));//bry
-                    brush.setColor(Color.cyan);
+                    brush.setColor(_style.getElementground());
                 } else {
                     drawing = false;
                 }
@@ -177,7 +178,7 @@ public class Gridded
                             (int)thickness
                     );
                     //Label box:
-                    String label = ""+(-n*scale/START_BULK);
+                    String label = ""+(-n*scale/ _START_BULK);
 
                     double labelSize = label.length()*fontsize/2;
                     int vertStick = (int) (
@@ -199,26 +200,15 @@ public class Gridded
                     );
                     Font font = new Font("Serif", Font.PLAIN, (int)(fontsize));
                     brush.setFont(font);
-                    brush.setColor(Color.black);
+                    brush.setColor(_style.getElementfont());
                     brush.drawString(label, leftShift, (int)(n*scale+fontsize/2.7));
-                    brush.setColor(Color.cyan);
+                    brush.setColor(_style.getElementground());
                 } else {
                     drawing = false;
                 }
                 n++;
             }
         }
-        //Rectangle r = new Rectangle(-100, -100, 200, 200);
-        //brush.setColor(Color.blue);
-        //brush.fill(r);
-        //r = new Rectangle(
-        //        (int)tlx,
-        //        (int)tly,
-        //        (int)400,
-        //        (int)400
-        //);
-        //brush.setColor(Color.blue);
-        //brush.fill(r);
 
         if(_data.getClass().equals(Object[].class)){
             for(Object o : (Object[])_data) _graphPainter.get(o.getClass()).actOn(surface, brush);
@@ -228,8 +218,6 @@ public class Gridded
             _graphPainter.get(_data.getClass()).actOn(surface, brush);
         }
 
-
-        //_drawData(surface, brush);
     }
 
     private Object _data =
@@ -250,15 +238,6 @@ public class Gridded
             1,
 
     };
-        //new double[][]{
-    //        {-2, 3},
-    //        {3, 3},
-    //        {-5, -6},
-    //        {6, 65},
-    //};
-
-
-
 
 }
 
