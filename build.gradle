@@ -3,7 +3,7 @@ plugins {
     id 'java'
 }
 
-group 'org.teatro'
+group 'org.theatro'
 version '1.0-SNAPSHOT'
 
 sourceCompatibility = 1.8

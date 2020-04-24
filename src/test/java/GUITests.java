@@ -1,6 +1,6 @@
 import org.junit.Test;
-import teatro.core.backstage.*;
-import teatro.play.Gridded;
+import theatro.core.backstage.*;
+import theatro.play.Gridded;
 
 public class GUITests
 {

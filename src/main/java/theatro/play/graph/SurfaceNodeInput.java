@@ -1,10 +1,10 @@
 
-package teatro.play.graph;
+package theatro.play.graph;
 
-import teatro.core.backstage.DrawUtils;
-import teatro.core.backstage.Surface;
-import teatro.core.backstage.SurfaceObject;
-import teatro.core.backstage.SurfaceRepaintSpace;
+import theatro.core.backstage.DrawUtils;
+import theatro.core.backstage.Surface;
+import theatro.core.backstage.SurfaceObject;
+import theatro.core.backstage.SurfaceRepaintSpace;
 
 import java.awt.Color;
 import java.awt.Font;

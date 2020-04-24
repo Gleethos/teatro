@@ -1,7 +1,7 @@
-package teatro.play.graph;
+package theatro.play.graph;
 
-import teatro.core.backstage.GridSpaceMap;
-import teatro.templates.NavigableSurface;
+import theatro.core.backstage.GridSpaceMap;
+import theatro.templates.NavigableSurface;
 
 import java.awt.*;
 

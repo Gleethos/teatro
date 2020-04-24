@@ -1,6 +1,6 @@
-package teatro.play.graph;
+package theatro.play.graph;
 
-import teatro.core.backstage.*;
+import theatro.core.backstage.*;
 
 import java.awt.*;
 import java.awt.MultipleGradientPaint.CycleMethod;

@@ -1,4 +1,4 @@
-package teatro.core.backstage;
+package theatro.core.backstage;
 
 import java.awt.Graphics2D;
 import java.awt.Rectangle;

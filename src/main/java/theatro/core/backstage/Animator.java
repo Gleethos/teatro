@@ -1,4 +1,4 @@
-package teatro.core.backstage;
+package theatro.core.backstage;
 
 import java.util.ArrayList;
 import java.util.HashMap;

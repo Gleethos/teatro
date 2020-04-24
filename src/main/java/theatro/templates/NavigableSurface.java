@@ -1,7 +1,7 @@
-package teatro.templates;
+package theatro.templates;
 
 
-import teatro.core.backstage.*;
+import theatro.core.backstage.*;
 
 import java.awt.Color;
 import java.awt.Graphics;
@@ -10,10 +10,7 @@ import java.awt.RenderingHints;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.geom.AffineTransform;
-import java.util.ArrayList;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.ListIterator;
+import java.util.*;
 
 import javax.swing.JPanel;
 import javax.swing.Timer;
@@ -24,30 +21,29 @@ public class NavigableSurface extends JPanel implements Surface, ActionListener
     // I/O:
     private SurfaceListener _listener;
     // Navigation:
-    private AffineTransform Scaler = new AffineTransform();
-    private AffineTransform Translator = new AffineTransform();
+    private AffineTransform _scaler = new AffineTransform();
+    private AffineTransform _translator = new AffineTransform();
 
     //Space search label:
-    AbstractSpaceMap PanelMap = null;
+    AbstractSpaceMap _surfaceMap = null;
 
     // Animations:
-    private teatro.core.backstage.Animator _animator;
+    private theatro.core.backstage.Animator _animator;
 
-    private int scaleAnimationCounter = 160;
-    private int lastSenseX;
-    private int lastSenseY;
+    private int _lastSenseX;
+    private int _lastSenseY;
 
-    private Timer GUITimer;
+    private Timer _frameTimer;
 
     // Sense Focus:
-    private SurfaceObject FocusObject;
+    private SurfaceObject _focusObject;
 
     public SurfaceObject getFocusObject() {
-        return FocusObject;
+        return _focusObject;
     }
 
     public void setFocusObject(SurfaceObject object) {
-        FocusObject = object;
+        _focusObject = object;
     }
 
     @Override
@@ -127,28 +123,28 @@ public class NavigableSurface extends JPanel implements Surface, ActionListener
         Swipe = newSwipe;
     }
 
-    private boolean touchMode = true;
+    private boolean _touchMode = true;
 
-    private boolean drawRepaintSpaces = true;
-    private boolean advancedRendering = true;
-    private boolean mapRendering = false;
+    private boolean _drawRepaintSpaces = true;
+    private boolean _advancedRendering = true;
+    private boolean _mapRendering = false;
 
-    private long frameStart;
-    private int frameDelta;
+    private long _frameStart;
+    private int _frameDelta;
 
-    private double fps;
-    private double smoothFPS;
+    private double _fps;
+    private double _smoothFPS;
 
     public interface SurfaceAction {
-        void actOn(NavigableSurface panel);
+        boolean actOn(NavigableSurface panel);
     }
 
     public AffineTransform getScaler() {
-        return Scaler;
+        return _scaler;
     }
 
     public AffineTransform getTranslator() {
-        return Translator;
+        return _translator;
     }
 
     public double getCenterX() {
@@ -173,19 +169,19 @@ public class NavigableSurface extends JPanel implements Surface, ActionListener
 
     // Settings:
     public boolean isAntialiasing() {
-        return advancedRendering;
+        return _advancedRendering;
     }
 
     public boolean isMaprendering() {
-        return mapRendering;
+        return _mapRendering;
     }
 
     public boolean isClipRendering() {
-        return drawRepaintSpaces;
+        return _drawRepaintSpaces;
     }
 
     public boolean isInTouchMode() {
-        return touchMode;
+        return _touchMode;
     }
 
     private SurfaceRepaintSpace _currentFrameSpace;
@@ -288,7 +284,8 @@ public class NavigableSurface extends JPanel implements Surface, ActionListener
 
     //=======================================================================================
 
-    public NavigableSurface() {
+    public NavigableSurface()
+    {
         _painter = NavigableSurface.Utility.DefaultPainter;
         _animator = new Animator();
         _listener = new SurfaceListener(this);
@@ -298,31 +295,35 @@ public class NavigableSurface extends JPanel implements Surface, ActionListener
         setBackground(Color.black);
         repaint(0, 0, getWidth(), getHeight());
         this.scaleAt(getWidth() / 2, getHeight() / 2, 0.001);
-        GUITimer = new Timer(25, this);
-        GUITimer.start();
+        _frameTimer = new Timer(25, this);
+        _frameTimer.start();
     }
 
     public void updateAndRedraw()
     {
         _listener.updateOn(this);
-        applySwipe.actOn(this);
-        applyClick.actOn(this);
-        applyLongPress.actOn(this);
-        applyDoubleClick.actOn(this);
-        applyScaling.actOn(this);
-        applySense.actOn(this);
+        boolean redraw =
+        applySwipe.actOn(this) ||
+        applyClick.actOn(this) ||
+        applyLongPress.actOn(this) ||
+        applyDoubleClick.actOn(this) ||
+        applyScaling.actOn(this) ||
+        applySense.actOn(this) ||
         applyDrag.actOn(this);
 
+        if(!redraw) return;
+        System.out.println(new Random().nextDouble());
         double tlx = realX(0);
         double tly = realY(0);
         double brx = tlx+((getWidth()) / (getScale()*1)) ;
         double bry = tly+((getHeight())/ (getScale()*1));
         _currentFrameSpace = new SurfaceRepaintSpace(tlx, tly, brx, bry);
 
-        if (PanelMap != null) {
+        if (_surfaceMap != null)
+        {
             LinkedList<SurfaceObject> killList = new LinkedList<SurfaceObject>();
             LinkedList<SurfaceObject> updateList = new LinkedList<SurfaceObject>();
-            PanelMap.applyToAll(
+            _surfaceMap.applyToAll(
                     (SurfaceObject thing) -> {
                         updateList.add(thing);
                         if ((thing).killable()) killList.add((thing));
@@ -332,16 +333,16 @@ public class NavigableSurface extends JPanel implements Surface, ActionListener
             if (killList.size() > 0) System.out.println("KILLING OCCURRED! :O");
             Surface surface = this;
             updateList.forEach((SurfaceObject thing) -> thing.updateOn(surface));
-            for(int ki = 0; ki<killList.size(); ki++) PanelMap = PanelMap.removeAndUpdate(killList.get(ki));
+            for(int ki = 0; ki<killList.size(); ki++) _surfaceMap = _surfaceMap.removeAndUpdate(killList.get(ki));
         }
 
         // REPAINT:
         repaint(0, 0, getWidth(), getHeight());
 
-        frameDelta = (int) (Math.abs((System.nanoTime() - frameStart)));
-        fps = 1e9 / (((double) frameDelta));
-        if (fps > 60) {
-            double time = (fps - 60.0) / 4;
+        _frameDelta = (int) (Math.abs((System.nanoTime() - _frameStart)));
+        _fps = 1e9 / (((double) _frameDelta));
+        if (_fps > 60) {
+            double time = (_fps - 60.0) / 4;
             try {
                 if (time < 50) {
                     Thread.sleep((long) time);
@@ -350,43 +351,35 @@ public class NavigableSurface extends JPanel implements Surface, ActionListener
 
             }
         }
-        frameDelta = (int) (Math.abs((System.nanoTime() - frameStart)));
-        fps = 1e9 / (((double) frameDelta));
-        smoothFPS = (fps + 12 * smoothFPS) / 13;
-        frameStart = System.nanoTime();
-
-        //if (scaleAnimationCounter > 0) {
-        //    double scale = 1 / Math.pow(1 + (2 / ((double) scaleAnimationCounter + 15)), 2);
-        //    this.scaleAt(getWidth() / 2, getHeight() / 2, scale);
-        //    scaleAnimationCounter -= 1;
-        //    repaint(0, 0, getWidth(), getHeight());
-        //}
-
+        _frameDelta = (int) (Math.abs((System.nanoTime() - _frameStart)));
+        _fps = 1e9 / (((double) _frameDelta));
+        _smoothFPS = (_fps + 12 * _smoothFPS) / 13;
+        _frameStart = System.nanoTime();
     }
 
     //================================================================================================================================
     public int lastSenseX() {
-        return lastSenseX;
+        return _lastSenseX;
     }
 
     public int lastSenseY() {
-        return lastSenseY;
+        return _lastSenseY;
     }
 
     public void setLastSenseX(int value) {
-        lastSenseX = value;
+        _lastSenseX = value;
     }
 
     public void setLastSenseY(int value) {
-        lastSenseY = value;
+        _lastSenseY = value;
     }
 
     public double realLastSenseX() {
-        return realX(lastSenseX);
+        return realX(_lastSenseX);
     }
 
     public double realLastSenseY() {
-        return realY(lastSenseY);
+        return realY(_lastSenseY);
     }
 
     //--------------------------------------------------------------------------------------------------------------------------------
@@ -439,7 +432,7 @@ public class NavigableSurface extends JPanel implements Surface, ActionListener
     //--------------------------------------------------------------------------------------------------------------------------------
     private SurfaceObject find(double x, double y, boolean topMost, SurfaceObject upToException, AbstractSpaceMap.MapAction action) {
         List<SurfaceObject> List = null;
-        if (PanelMap != null) List = PanelMap.findAllAt(x, y, action);
+        if (_surfaceMap != null) List = _surfaceMap.findAllAt(x, y, action);
         if (List == null) return null;
         SurfaceObject best = null;
         ListIterator<SurfaceObject> Iterator = List.listIterator();
@@ -507,19 +500,19 @@ public class NavigableSurface extends JPanel implements Surface, ActionListener
 
     //--------------------------------------------------------------------------------------------------------------------------------
     public double realX(double x) {
-        return ((x) / Scaler.getScaleX()) - Translator.getTranslateX();
+        return ((x) / _scaler.getScaleX()) - _translator.getTranslateX();
     }
 
     public double realY(double y) {
-        return ((y) / Scaler.getScaleY()) - Translator.getTranslateY();
+        return ((y) / _scaler.getScaleY()) - _translator.getTranslateY();
     }
 
     public double realToOnPanelX(double x) {
-        return ((x + Translator.getTranslateX()) * Scaler.getScaleX());
+        return ((x + _translator.getTranslateX()) * _scaler.getScaleX());
     }
 
     public double realToOnPanelY(double y) {
-        return ((y + Translator.getTranslateY()) * Scaler.getScaleY());
+        return ((y + _translator.getTranslateY()) * _scaler.getScaleY());
     }
 
     //--------------------------------------------------------------------------------------------------------------------------------
@@ -528,7 +521,7 @@ public class NavigableSurface extends JPanel implements Surface, ActionListener
     }
 
     public void translate(double translateX, double translateY) {
-        Translator.translate(translateX * 1 / Scaler.getScaleX(), translateY * 1 / Scaler.getScaleY());
+        _translator.translate(translateX * 1 / _scaler.getScaleX(), translateY * 1 / _scaler.getScaleY());
         repaint(0, 0, getWidth(), getHeight());//Repaint spaces?
     }
     //--------------------------------------------------------------------------------------------------------------------------------
@@ -582,7 +575,7 @@ public class NavigableSurface extends JPanel implements Surface, ActionListener
 
     @Override
     public double getScale() {
-        return Scaler.getScaleX();
+        return _scaler.getScaleX();
     }
 
     @Override
@@ -608,17 +601,17 @@ public class NavigableSurface extends JPanel implements Surface, ActionListener
 
     @Override
     public int getFrameDelta() {
-        return frameDelta;
+        return _frameDelta;
     }
 
     @Override
     public AbstractSpaceMap getMap() {
-        return PanelMap;
+        return _surfaceMap;
     }
 
     @Override
     public void setMap(AbstractSpaceMap newMap) {
-        PanelMap = newMap;
+        _surfaceMap = newMap;
     }
 
     public static class Utility
@@ -640,27 +633,29 @@ public class NavigableSurface extends JPanel implements Surface, ActionListener
                 (surface) ->
                 {
                     int[] Press = surface.getPress();
-                    if (Press == null) return;
+                    if (Press == null) return false;
                     int x = Press[0];
                     int y = Press[1];
                     surface.setPress(null);
+                    return true;
                 };
         //-------------------------------------
         static SurfaceAction DefaultLongPressAction =
                 (surface) ->
                 {
                     int[] LongPress = surface.getLongPress();
-                    if (LongPress == null) return;
+                    if (LongPress == null) return false;
                     int x = LongPress[0];
                     int y = LongPress[1];
                     surface.setLongPress(null);
+                    return true;
                 };
         //-------------------------------------
         static SurfaceAction DefaultClickAction =
                 (surface) ->
                 {
                     int[] Click = surface.getClick();
-                    if (Click == null) return;
+                    if (Click == null) return false;
                     int x = Click[0];
                     int y = Click[1];
                     surface.getListener().setDragStart(x, y);
@@ -672,12 +667,13 @@ public class NavigableSurface extends JPanel implements Surface, ActionListener
                     }
                     surface.setClick(null);
                     surface.repaint(0, 0, surface.getWidth(), surface.getHeight());
+                    return true;
                 };
         //-------------------------------------
         static SurfaceAction DefaultDoubleClickAction = (surface) ->
         {
             int[] DoubleClick = surface.getDoubleClick();
-            if (DoubleClick == null) return;
+            if (DoubleClick == null) return false;
             int x = DoubleClick[0];
             int y = DoubleClick[1];
             SurfaceObject found = surface.findObject(surface.realX(x), surface.realY(y), true, null);
@@ -687,12 +683,13 @@ public class NavigableSurface extends JPanel implements Surface, ActionListener
                 //Double clicked in empty space!
             }
             surface.setDoubleClick(null);
+            return true;
         };
         //-------------------------------------
         static SurfaceAction DefaultScalingAction =
                 (surface) ->
                 {
-                    if (surface.getScaling() == null) return;
+                    if (surface.getScaling() == null) return false;
                     int x = (int) surface.getScaling()[0];
                     int y = (int) surface.getScaling()[1];
                     double scaleFactor = surface.getScaling()[2];
@@ -703,13 +700,14 @@ public class NavigableSurface extends JPanel implements Surface, ActionListener
                     surface.translate(x, y);
                     surface.setScaling(null);
                     surface.repaint(0, 0, surface.getWidth(), surface.getHeight());
+                    return true;
                 };
         //-------------------------------------
         static SurfaceAction DefaultSenseAction =
                 (surface) ->
                 {
                     int[] Sense = surface.getSense();
-                    if (Sense == null) return;
+                    if (Sense == null) return false;
                     int x = Sense[0];
                     int y = Sense[1];
                     surface.setMovement(null);
@@ -719,13 +717,14 @@ public class NavigableSurface extends JPanel implements Surface, ActionListener
                     surface.setFocusObject(surface.findObject(realX, realY, true, null));
                     surface.setLastSenseX(x);
                     surface.setLastSenseY(y);
+                    return true;
                 };
         //-------------------------------------
         static SurfaceAction DefaultSwipeAction =
                 (surface) ->
                 {
                     int[] Swipe = surface.getSwipe();
-                    if (Swipe == null) return;
+                    if (Swipe == null) return false;
                     if (surface.isInTouchMode()) {
                         surface.setFocusObject(surface.findObject(surface.realX(Swipe[0]), surface.realY(Swipe[1]), true, null));
                         if (surface.getFocusObject() != null) {
@@ -735,7 +734,7 @@ public class NavigableSurface extends JPanel implements Surface, ActionListener
                             surface.getFocusObject().moveDirectional(data, surface);
                             Swipe[0] = Swipe[2];
                             Swipe[1] = Swipe[3];
-                            return;
+                            return true;
                         }
                         if (surface.getFocusObject() == null) {
                             surface.translate(Swipe[2] - Swipe[0], Swipe[3] - Swipe[1]);
@@ -750,19 +749,21 @@ public class NavigableSurface extends JPanel implements Surface, ActionListener
                         surface.setSwipe(null);
                     }
                     surface.setSwipe(null);
+                    return true;
                 };
         //-------------------------------------
         static SurfaceAction DefaultDragAction =
                 (surface) ->
                 {
                     int[] Drag = surface.getSwipe();
-                    if (Drag == null) return;
+                    if (Drag == null) return false;
                     if (surface.isInTouchMode()) {
 
                     } else {
 
                     }
                     surface.setSwipe(null);
+                    return true;
                 };
         //-------------------------------------
 
@@ -771,7 +772,7 @@ public class NavigableSurface extends JPanel implements Surface, ActionListener
 
     @Override
     public void actionPerformed(ActionEvent arg0) {
-        if (arg0.getSource() == GUITimer) updateAndRedraw();
+        if (arg0.getSource() == _frameTimer) updateAndRedraw();
     }
 
 }

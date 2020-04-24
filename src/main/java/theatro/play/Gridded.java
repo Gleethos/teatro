@@ -1,7 +1,7 @@
-package teatro.play;
+package theatro.play;
 
-import teatro.StyleSet;
-import teatro.templates.NavigableSurface;
+import theatro.StyleSet;
+import theatro.templates.NavigableSurface;
 
 import javax.swing.*;
 import java.awt.*;

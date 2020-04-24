@@ -1,4 +1,4 @@
-package teatro.core.backstage;
+package theatro.core.backstage;
 
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
@@ -20,9 +20,9 @@ public class SurfaceListener implements MouseListener, MouseMotionListener, Mous
     private static final int pressTimeLimit = 900500000;
     private static final double pressRadius = 100;
 
-    teatro.core.backstage.Surface Surface;
+    theatro.core.backstage.Surface Surface;
 
-    public SurfaceListener(teatro.core.backstage.Surface surface) {
+    public SurfaceListener(theatro.core.backstage.Surface surface) {
         Surface = surface;
     }
 

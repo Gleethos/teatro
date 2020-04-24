@@ -1,4 +1,4 @@
-package teatro;
+package theatro;
 
 import java.awt.*;
 import java.util.HashMap;

@@ -1,4 +1,4 @@
-package teatro.core.backstage;
+package theatro.core.backstage;
 
 public interface SurfaceObject {
 	
