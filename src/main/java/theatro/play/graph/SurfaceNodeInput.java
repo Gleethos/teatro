@@ -177,7 +177,8 @@ public class SurfaceNodeInput implements SurfaceObject {
     public void updateOn(double centerX, double centerY, double hostRadius, Surface surface) {
         _X += _velX;
         _Y += _velY;
-        double velmod = 1/surface.getFrameDelta();
+        double fd = (surface.getFrameDelta()==0.0)?1:surface.getFrameDelta();
+        double velmod = 1/fd;
         _velX *= velmod;
         _velY *= velmod;
 

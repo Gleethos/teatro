@@ -3,14 +3,13 @@ package theatro.templates;
 
 import theatro.core.backstage.*;
 
-import java.awt.Color;
-import java.awt.Graphics;
-import java.awt.Graphics2D;
-import java.awt.RenderingHints;
+import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.geom.AffineTransform;
+import java.awt.image.BufferedImage;
 import java.util.*;
+import java.util.List;
 
 import javax.swing.JPanel;
 import javax.swing.Timer;
@@ -191,6 +190,19 @@ public class NavigableSurface extends JPanel implements Surface, ActionListener
         return _currentFrameSpace;
     }
 
+    @Override
+    public BufferedImage getScreenShot() {
+        BufferedImage image = new BufferedImage(
+                this.getWidth(),
+                this.getHeight(),
+                BufferedImage.TYPE_INT_RGB
+        );
+        // call the Component's paint method, using
+        // the Graphics object of the image.
+        this.paint( image.getGraphics() ); // alternately use .printAll(..)
+        return image;
+    }
+
     List<ObjectPainter>[] _layers = new List[]{
             new ArrayList<ObjectPainter>(),
             new ArrayList<ObjectPainter>(),
@@ -308,11 +320,11 @@ public class NavigableSurface extends JPanel implements Surface, ActionListener
         applyLongPress.actOn(this) ||
         applyDoubleClick.actOn(this) ||
         applyScaling.actOn(this) ||
-        applySense.actOn(this) ||
+        applySense.actOn(this) ||  // Redraw occurs even without anything 'needing' hover (sense)
         applyDrag.actOn(this);
 
         if(!redraw) return;
-        System.out.println(new Random().nextDouble());
+
         double tlx = realX(0);
         double tly = realY(0);
         double brx = tlx+((getWidth()) / (getScale()*1)) ;
@@ -333,7 +345,7 @@ public class NavigableSurface extends JPanel implements Surface, ActionListener
             if (killList.size() > 0) System.out.println("KILLING OCCURRED! :O");
             Surface surface = this;
             updateList.forEach((SurfaceObject thing) -> thing.updateOn(surface));
-            for(int ki = 0; ki<killList.size(); ki++) _surfaceMap = _surfaceMap.removeAndUpdate(killList.get(ki));
+            for (SurfaceObject surfaceObject : killList) _surfaceMap = _surfaceMap.removeAndUpdate(surfaceObject);
         }
 
         // REPAINT:

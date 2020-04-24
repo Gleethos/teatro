@@ -1,6 +1,7 @@
 package theatro.core.backstage;
 
 import java.awt.*;
+import java.awt.image.BufferedImage;
 import java.util.List;
 
 public interface Surface {
@@ -58,5 +59,7 @@ public interface Surface {
     List<ObjectPainter>[] layers();
 
     SurfaceRepaintSpace getCurrentFrameSpace();
+
+    BufferedImage getScreenShot();
 
 }

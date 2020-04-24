@@ -15,8 +15,11 @@ public class StyleSet
     private Color _elementfont;
 
     private Color _highlight;
+    private Color _focus;
 
     private Color[] _palette;
+
+    Font _font;
 
     private static Map<String, StyleSet> _instances;
 
@@ -34,8 +37,11 @@ public class StyleSet
                         Color.BLACK,
 
                         Color.GREEN,
+                        Color.GREEN,
 
-                        null
+                        null,
+
+                        new Font("Serif", Font.PLAIN, (int)(12))
                 )
         );
 
@@ -50,8 +56,11 @@ public class StyleSet
                         Color.BLACK,
 
                         Color.GREEN,
+                        Color.BLUE,
 
-                        null
+                        null,
+
+                        new Font(Font.SANS_SERIF, Font.PLAIN, (int)(12))
                 )
         );
 
@@ -70,8 +79,11 @@ public class StyleSet
             Color elementfont,
 
             Color highlight,
+            Color focus,
             
-            Color[] palette
+            Color[] palette,
+
+            Font font
     ){
         _background = backgound;
         _groundlines = groundlines;
@@ -82,8 +94,11 @@ public class StyleSet
         _elementfont = elementfont;
 
         _highlight = highlight;
+        _focus = focus;
 
         _palette = palette;
+
+        _font = font;
     }
 
 
@@ -119,13 +134,19 @@ public class StyleSet
         return _highlight;
     }
 
+
+
     public Color[] getPalette() {
         return _palette;
     }
 
-
+    public Color getFocus(){
+        return _focus;
+    }
     
-    
+    public Font getFont(){
+        return _font;
+    }
     
 
 

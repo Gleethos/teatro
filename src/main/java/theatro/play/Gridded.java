@@ -1,6 +1,8 @@
 package theatro.play;
 
 import theatro.StyleSet;
+import theatro.TUI;
+import theatro.core.backstage.Surface;
 import theatro.templates.NavigableSurface;
 
 import javax.swing.*;
@@ -8,7 +10,7 @@ import java.awt.*;
 import java.util.HashMap;
 import java.util.Map;
 
-public class Gridded
+public class Gridded implements TUI
 {
     private static final int _WIDTH = 800;
     private static final int _HEIGHT = 700;
@@ -113,10 +115,9 @@ public class Gridded
         else if(steps<10) _bulk /=2;
         int scale = (int) _bulk;
 
-        brush.setColor(_style.getHighlight()); // Central cross:
+        brush.setColor(_style.getFocus()); // Central cross:
         if(tlx<0 && 0<brx) brush.fillRect(0, (int)(tly-thickness/2), (int)thickness, (int)(bry-tly));
         if(tly<0 && 0<bry) brush.fillRect((int)(tlx-thickness/2), 0, (int)(brx-tlx), (int)thickness);
-
 
         brush.setColor(_style.getElementground());
         thickness/=2; // y = n * x
@@ -128,13 +129,14 @@ public class Gridded
             {
                 if( (n*scale)<=brx ){//tlx<=(n*scale)
                     //Vertical line:
-                    Rectangle r = new Rectangle(
-                            n*scale,
-                            (int)(tly-thickness/2),
-                            (int)thickness,
-                            (int)(bry-tly)
-                    );
-                    brush.fill(r);
+                    if(n!=0) { // Centrak cross already drawn!
+                        brush.fillRect(
+                                n*scale,
+                                (int)(tly-thickness/2),
+                                (int)thickness,
+                                (int)(bry-tly)
+                        );
+                    }
                     //Label box:
                     String label = ""+(n*scale/ _START_BULK);
                     int leftShift = (int)(n*scale-label.length()*fontsize/4);
@@ -154,7 +156,7 @@ public class Gridded
                             (int)(fontsize),
                             (int)(fontsize)
                     );
-                    Font font = new Font("Serif", Font.PLAIN, (int)(fontsize));
+                    Font font = new Font(_style.getFont().getName(), Font.PLAIN, (int)(fontsize));
                     brush.setFont(font);
                     brush.setColor(_style.getElementfont());
                     brush.drawString(label, leftShift, (int)(horzStick+fontsize/2.7));//bry
@@ -170,13 +172,15 @@ public class Gridded
             while(drawing)
             {
                 if( (n*scale)<=bry ){//tlx<=(n*scale)
-                    //Vertical line:
-                    brush.fillRect(
-                            (int)(tlx-thickness/2),
-                            n*scale,
-                            (int)(brx-tlx),
-                            (int)thickness
-                    );
+                    //horizontal line:
+                    if(n!=0){// -> Central cross already drawn
+                        brush.fillRect(
+                                (int)(tlx-thickness/2),
+                                n*scale,
+                                (int)(brx-tlx),
+                                (int)thickness
+                        );
+                    }
                     //Label box:
                     String label = ""+(-n*scale/ _START_BULK);
 
@@ -189,7 +193,6 @@ public class Gridded
                                     : 0
                     );
                     int leftShift = (int)(vertStick-labelSize/2);
-
                     brush.fillRoundRect(
                             (int)(leftShift-fontsize/2),
                             (int)(n*scale-fontsize/2),
@@ -198,7 +201,7 @@ public class Gridded
                             (int)(fontsize),
                             (int)(fontsize)
                     );
-                    Font font = new Font("Serif", Font.PLAIN, (int)(fontsize));
+                    Font font = new Font(_style.getFont().getName(), Font.PLAIN, (int)(fontsize));
                     brush.setFont(font);
                     brush.setColor(_style.getElementfont());
                     brush.drawString(label, leftShift, (int)(n*scale+fontsize/2.7));
@@ -239,6 +242,10 @@ public class Gridded
 
     };
 
+    @Override
+    public Surface getSurface() {
+        return _surface;
+    }
 }
 
 

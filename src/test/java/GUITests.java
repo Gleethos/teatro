@@ -2,24 +2,49 @@ import org.junit.Test;
 import theatro.core.backstage.*;
 import theatro.play.Gridded;
 
+import javax.imageio.ImageIO;
+import java.awt.*;
+import java.awt.image.BufferedImage;
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.math.BigInteger;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
+
 public class GUITests
 {
 
+    private BigInteger _md5(BufferedImage img){
+        try {
+            ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
+            ImageIO.write(img, "png", outputStream);
+            byte[] data = outputStream.toByteArray();
+            MessageDigest md = MessageDigest.getInstance("MD5");
+            md.update(data);
+            return new BigInteger(md.digest());
+        } catch (Exception e){
+
+        }
+        return BigInteger.ZERO;
+    }
+
     @Test
-    public void experiments(){
+    public void experiments() throws IOException, NoSuchAlgorithmException {
 
 
         Gridded g = new Gridded();
         try{
-            Thread.sleep(20000);
+            Thread.sleep(20);
         } catch(Exception e){
 
         }
 
+        assert _md5(g.getSurface().getScreenShot()).toString().equals("66560772335232945587585372287994684705");
+
+
 
 
     }
-
 
     @Test
     public void testSurfaceUtility(){

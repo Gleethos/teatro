@@ -1,11 +1,12 @@
 package theatro.play.graph;
 
+import theatro.TUI;
 import theatro.core.backstage.GridSpaceMap;
+import theatro.core.backstage.Surface;
 import theatro.templates.NavigableSurface;
 
 import java.awt.*;
 
-import javax.swing.JButton;
 import javax.swing.JFrame;
 import javax.swing.JMenu;
 import javax.swing.JMenuBar;
@@ -13,40 +14,32 @@ import javax.swing.JMenuItem;
 import javax.swing.JPanel;
 import java.util.List;
 
-public class NodeWindow
+public class NodeWindow implements TUI
 {
     private static JFrame _window;
 
     public static final int WIDTH = 800;
     public static final int HEIGHT = 700;
 
-    NavigableSurface Surface;
-
-    private JButton startButton;
-    private JButton randomizeNetworkButton;
+    NavigableSurface _surface;
 
     public NodeWindow(List<Object> tree) {
         
-        Surface = new NavigableSurface();
+        _surface = new NavigableSurface();
         SurfaceNode nnode = new SurfaceNode(tree, -400, 2500, this);
         addSurfaceObject(nnode);
-        Surface.setPreferredSize(new Dimension(500, 500));
-        Surface.setBackground(Color.black);
+        //Surface.setPreferredSize(new Dimension(500, 500));
+        _surface.setBackground(Color.black);
 
         System.setProperty("sun.java2d.opengl", "true");
-        _window = new JFrame("Network Display");
+        _window = new JFrame("Graph");
         _window.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         _window.setSize(WIDTH, HEIGHT);
         _window.setLocationRelativeTo(null);
         _window.setResizable(true);
-        //_window.setLayout(null);
-        //_window.addKeyListener(this);
         _window.setFocusable(true);
         _window.setUndecorated(false);
-        //_window.getRootPane().setWindowDecorationStyle(JRootPane.BOTTOM_ALIGNMENT);
-        //((JComponent) _window).setBorder(new EmptyBorder(5, 5, 5, 5));
-        // NodeGraphPanel.addKeyListener(this);
-        // NodeGraphPanel.setFocusable(true);
+
 
         //_window.setExtendedState(JFrame.MAXIMIZED_BOTH);
         //_window.setUndecorated(true);
@@ -66,30 +59,21 @@ public class NodeWindow
         MainPanel.setLayout(new BorderLayout());
         //MainPanel.addInto(new JLabel("AbstractSurfaceNode display:",JLabel.CENTER), BorderLayout.NORTH);
         MainPanel.setBackground(Color.CYAN);
-        MainPanel.add(Surface, BorderLayout.CENTER);
-
-        JPanel controlBarPanel = new JPanel();
-        controlBarPanel.setLayout(new FlowLayout());
-        controlBarPanel.setComponentOrientation(ComponentOrientation.LEFT_TO_RIGHT);
-        controlBarPanel.setBackground(Color.CYAN);
-        randomizeNetworkButton = new JButton("RANDOMIZE EVERYTHING!");
-        //randomizeNetworkButton.addActionListener(this);
-        controlBarPanel.add(randomizeNetworkButton);
-
-        startButton = new JButton("RUN NETWORK");
-        // startButton.addActionListener(this);
-        controlBarPanel.add(startButton);
-        MainPanel.add(controlBarPanel, BorderLayout.SOUTH);
+        MainPanel.add(_surface, BorderLayout.CENTER);
 
         _window.getContentPane().add(MainPanel);
         _window.setVisible(true);
     }
 
-    public void addSurfaceObject(SurfaceNode PanelNeuron) {
-        if (Surface.getMap() == null) {
-            Surface.setMap(new GridSpaceMap(PanelNeuron.getX(), PanelNeuron.getY(), 10000));
-        }
-        Surface.setMap(Surface.getMap().addAndUpdate(PanelNeuron));
+    public void addSurfaceObject(SurfaceNode n) {
+        if (_surface.getMap() == null) _surface.setMap(new GridSpaceMap(n.getX(), n.getY(), 10000));
+        _surface.setMap(_surface.getMap().addAndUpdate(n));
     }
+
+    @Override
+    public Surface getSurface() {
+        return _surface;
+    }
+
 
 }
